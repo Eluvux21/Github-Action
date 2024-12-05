@@ -1,0 +1,67 @@
+name:  Github Action
+
+on:
+  push:
+    branches-ignore:
+      - ga-ignore-*
+  pull_request:
+    branches-ignore:
+      - ga-ignore-*
+
+jobs:
+  check_coding_style:
+    runs-on: ubuntu-latest
+    container: ghcr.io/epitech/coding-style-checker:latest
+    name: Coding Style
+    steps:
+      - name: 🎯 coding-style
+        id: check_coding_style
+        uses: actions/checkout@v3
+      - name: coding-style-errors
+        run:  |
+            check.sh $(pwd) $(pwd)
+            input="coding-style-reports.log"
+            while IFS=":" read -r file line error_type error_code
+              do
+                echo "::error title=$error_type coding style error,file=$file,line=$line::$error_code"
+              done < "$input"
+      - name: report
+        run: |
+            if [ -s "coding-style-reports.log" ]
+              then
+                exit 1
+            fi
+
+  check_build:
+    name: 🛠️​​ Build
+    container: epitechcontent/epitest-docker:latest
+    runs-on: ubuntu-latest
+    needs: check_coding_style
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      
+      - name: Build Program
+        run: |
+             make
+        
+      - name: Check Executable
+        run: |
+             executable=$(find . -type f -executable | head -n 1)
+             if [ -z "$executable" ]; then
+                echo "Error: No executable found"
+                exit 1
+              fi
+              echo "Found executable: $executable"
+
+  run_tests:
+    name: 🏆​ Unit Tests
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker:latest
+    needs: check_build
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Run Tests
+        run: timeout 120 make tests_run
