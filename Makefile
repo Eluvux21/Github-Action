@@ -1,7 +1,8 @@
+##
 ## EPITECH PROJECT, 2024
 ## Makefile
 ## File description:
-## EPitech Makefile
+## Epitech Makefile
 ##
 
 SRC_MAIN		=	src/main.c	\
